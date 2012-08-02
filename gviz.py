@@ -16,13 +16,15 @@ import wx,time
 
 class window(wx.Frame):
     def __init__(self,f,size=(600,600),build_dimensions=[200,200,100,0,0,0],grid=(10,50),extrusion_width=0.5):
-        wx.Frame.__init__(self,None,title="Gcode view, shift to move view, mousewheel to set layer",size=(size[0],size[1]))
+        wx.Frame.__init__(self,None,title="Gcode view, shift to move view, mousewheel to set layer, CTRL+Q to close",size=(size[0],size[1]))
         self.p=gviz(self,size=size,build_dimensions=build_dimensions,grid=grid,extrusion_width=extrusion_width)
         
         # Set up a status bar for displaying info  (Jezmy)
         self.CreateStatusBar(1);
         self.SetStatusText("Layer number and Z position show here when you scroll");
-        
+
+        self.p.SetFocus()
+
         s=time.time()
         #print time.time()-s
         self.initpos=[0,0]
@@ -56,15 +58,72 @@ class window(wx.Frame):
         x=event.GetKeyCode()
         if event.ShiftDown():
             cx,cy=self.p.translate
+            mx=self.p.size[0]/2;
+            my=self.p.size[1]/2;
             if x==wx.WXK_UP:
-                self.p.zoom(cx,cy,1.2)
+                self.p.zoom(mx,my,1.2)
             if x==wx.WXK_DOWN:
-                self.p.zoom(cx,cy,1/1.2)
+                self.p.zoom(mx,my,1/1.2)
+        elif event.ControlDown():
+            if x==81:
+                self.Close();
+            if x==wx.WXK_UP or x==wx.WXK_NUMPAD_UP:
+                cx,cy=self.p.translate
+                cy-=10
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_DOWN or x==wx.WXK_NUMPAD_DOWN:
+                cx,cy=self.p.translate
+                cy+=10
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_LEFT or x==wx.WXK_NUMPAD_LEFT:
+                cx,cy=self.p.translate
+                cx-=10
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_RIGHT or x==wx.WXK_NUMPAD_RIGHT:
+                cx,cy=self.p.translate
+                cx+=10
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
         else:
-            if x==wx.WXK_UP:
+            if x==wx.WXK_PAGEUP or x==wx.WXK_NUMPAD_PAGEUP:
                 self.p.layerup()
-            if x==wx.WXK_DOWN:  
+            if x==wx.WXK_PAGEDOWN or x==wx.WXK_NUMPAD_PAGEDOWN:
                 self.p.layerdown()
+            if x==wx.WXK_HOME or x==wx.WXK_NUMPAD_HOME:
+                self.p.layertop()
+            if x==wx.WXK_END or x==wx.WXK_NUMPAD_END:
+                self.p.layerbottom()
+            if x==wx.WXK_UP or x==wx.WXK_NUMPAD_UP:
+                cx,cy=self.p.translate
+                cy-=1
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_DOWN or x==wx.WXK_NUMPAD_DOWN:
+                cx,cy=self.p.translate
+                cy+=1
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_LEFT or x==wx.WXK_NUMPAD_LEFT:
+                cx,cy=self.p.translate
+                cx-=1
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
+            if x==wx.WXK_RIGHT or x==wx.WXK_NUMPAD_RIGHT:
+                cx,cy=self.p.translate
+                cx+=1
+                self.p.translate = (cx,cy)
+                self.p.repaint()
+                self.p.Refresh()
         #print x
     
         #print p.lines.keys()
@@ -124,11 +183,27 @@ class gviz(wx.Panel):
         self.showall=0
         self.dirty=1
         #self.repaint()        
+    def layertop(self):
+        if(len(self.layers)>1):
+            self.layerindex=len(self.layers)-1
+            # Display layer info on statusbar (Jezmy)
+            self.parent.SetStatusText("Layer "+str(self.layerindex +1)+" - Going To Top - Z = "+str(self.layers[self.layerindex])+" mm",0)
+            self.repaint()
+            self.Refresh()
+    
     def layerup(self):
         if(self.layerindex+1<len(self.layers)):
             self.layerindex+=1
             # Display layer info on statusbar (Jezmy)
             self.parent.SetStatusText("Layer "+str(self.layerindex +1)+" - Going Up - Z = "+str(self.layers[self.layerindex])+" mm",0)
+            self.repaint()
+            self.Refresh()
+    
+    def layerbottom(self):
+        if(self.layerindex>0):
+            self.layerindex=0            
+            # Display layer info on statusbar (Jezmy)
+            self.parent.SetStatusText("Layer "+str(self.layerindex + 1)+" - Going To Bottom - Z = "+str(self.layers[self.layerindex])+ " mm",0)
             self.repaint()
             self.Refresh()
     
